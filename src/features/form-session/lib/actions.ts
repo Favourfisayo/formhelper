@@ -1,11 +1,13 @@
 "use server"
-import prisma from "@/lib/db"
 import { FormSessionDataType } from "@/types/FormSessionData";
 import { FormField } from "@/types/FormField";
-import { generateAIContent } from "@/utils/model";
 import { spitch_speak, spitch_translate } from "@/services/spitch/spitch";
 import { TextTranslateParams } from "spitch/resources";
-import { QuestionPrompt } from "@/prompts/questionPrompt";
+import { getRedisCache, setRedisCache } from "@/services/redis/redis";
+import {  goBackField, startSession, updateFieldAndSession } from "./utils/server/actions";
+import prisma from "@/lib/db"
+import { SessionState } from "@/types/SessionState";
+import { connectRedis } from "@/lib/redis";
 
 export async function getFormSessionData(formSessionId: string){
     const formSessionData = await prisma.formSession.findUnique({
@@ -13,81 +15,61 @@ export async function getFormSessionData(formSessionId: string){
             id: formSessionId
         },
     })
-
+    await connectRedis()
+    await setRedisCache(`formSession:${formSessionId}`, JSON.stringify(formSessionData))
     return formSessionData as FormSessionDataType
 }
-
-export async function startSession(formSessionId: string): Promise<FormSessionDataType> {
-  const updated = await prisma.formSession.update({
-    where: { id: formSessionId },
-    data: { sessionStarted: true },
-  })
-  return updated as FormSessionDataType
-}
-
-export async function askQuestion({currentFormField, language}: {
+export async function askQuestion({currentFormField, language, sessionId}: {
     currentFormField: FormField,
-    language: TextTranslateParams["source"]
+    language: TextTranslateParams["source"],
+    sessionId: string
     
 }) {
+    await connectRedis()
 
+    const sessionCacheKey = `formSession:${sessionId}`
+    const cachedSessionStr = await getRedisCache(sessionCacheKey)
 
-    console.log("📝 askQuestion start:", { field: currentFormField.label, language });
-    const question = (await frameQuestion(currentFormField)).text
-     console.log("🤖 AI framed question:", question);
+    let fieldFromCache: FormField | undefined
 
-     let spoken
-    if(language !== "en") {
-    const translated_question = question && await spitch_translate(language, question)
-    console.log("🌍 Translated question:", translated_question);
-    spoken = translated_question && await spitch_speak(translated_question, "femi", language)
-    } else {
-        spoken = question && await spitch_speak(question, "jude", language);
+    if(cachedSessionStr) {
+        const cachedSession = JSON.parse(cachedSessionStr) as FormSessionDataType
+
+        fieldFromCache = cachedSession.fields.find(f => f.id === currentFormField.id)
     }
 
-    return spoken
+    if(!fieldFromCache) {
+        console.log("⚠️ Field not found in cache, fetching from DB");
+        const sessionFromDb = await getFormSessionData(sessionId)
+        fieldFromCache = sessionFromDb.fields.find(f => f.id === currentFormField.id)
+    }
+
+    if (!fieldFromCache) throw new Error("Field not found in session");
+
+    const audioCacheKey = `formSessionAudio:${sessionId}${fieldFromCache.id}:${language}`;
+    const cachedAudio = await getRedisCache(audioCacheKey);
+    if (cachedAudio) {
+        console.log("🔹 Using cached audio for field:", fieldFromCache.label);
+        return Buffer.from(cachedAudio, "base64");
+    }
+
+    let audioBuffer: Buffer;
+    const textToSpeak = fieldFromCache.question;
+
+    if (language !== "en") {
+        const translatedText = await spitch_translate(language, textToSpeak);
+        audioBuffer = await spitch_speak(translatedText, "femi", language);
+    } else {
+        audioBuffer = await spitch_speak(textToSpeak, "jude", language);
+    }
+
+    const audioBase64 = audioBuffer.toString("base64");
+    await setRedisCache(audioCacheKey, audioBase64);
+
+    return audioBuffer;
 }
 
-
-async function frameQuestion(currentFormField: FormField) {
-    const prompt = QuestionPrompt(currentFormField)
-    return generateAIContent("gemini-2.5-flash", 
-    {text: prompt},)
-}
-
-
- async function updateFieldAndSession({
-    formSessionId,
-    fieldId,
-    value,
-}: {
-    formSessionId: string,
-    fieldId: string
-    value: any
-
-}) {
-    const formSessionData = await getFormSessionData(formSessionId)
-    
-    if (!formSessionData) throw new Error("Form session not found");
-
-    const fields = formSessionData.fields;
-
-    const updatedFields = fields.map(field =>
-    field.id === fieldId ? { ...field, value } : field);
-
-    const updatedFormSessionData = await prisma.formSession.update({
-        where: {id: formSessionId},
-        data: {
-            fields: updatedFields,
-            currentFieldIndex: {increment: 1}
-        },
-    })
-
-
-    return updatedFormSessionData
-}
-
-export async function handleNext(prevState: {message: string}, formData: FormData) {
+export async function handleNextField(prevState: {message: string}, formData: FormData) {
     const formSessionId =  formData.get("formSessionId") as string
 
     const formEntries = Array.from(formData.entries())
@@ -110,6 +92,21 @@ export async function handleNext(prevState: {message: string}, formData: FormDat
     console.error(error);
     return { message: "Error updating field" };
     }
+}
 
 
+
+export async function handleStartSession(prevState: SessionState, formData: FormData) {
+  const sessionId = formData.get('formSessionId') as string;
+  const updated = await startSession(sessionId);
+  return { message: "Session started", session: updated };
+}
+
+export async function handleGoBackAction(prevState: SessionState, formData: FormData) {
+  const formSessionId = formData.get('formSessionId') as string;
+  if (!prevState.session || prevState.session.currentFieldIndex === 0) {
+    return prevState;
+  }
+  const updated = await goBackField(formSessionId);
+  return { message: "", session: updated as FormSessionDataType };
 }

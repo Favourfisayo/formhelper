@@ -2,7 +2,7 @@ import { ContentListUnion, Type } from "@google/genai";
 import { generateAIContent } from "../../../../utils/model"
 import { FormField } from "@/types/FormField";
 import { simpleExtractorPrompt as prompt } from "@/prompts/simpleExtractor";
-import { fileToBase64 } from "../../../../utils/fileToBase64";
+import { fileToBase64 } from "../../../../utils/fileHandling/fileToBase64";
 
 export async function simple_extractor(file: File) {
 

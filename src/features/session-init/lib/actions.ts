@@ -3,11 +3,15 @@ import { classifyForm } from "./utils/classifyForm"
 import { simple_extractor } from "./utils/simple_extractor"
 import { uploadState } from "../components/UploadForm"
 import { createSession } from "./utils/createSession"
-import { convertToImage } from "@/utils/convertToImage"
+import { convertToImage } from "@/utils/fileHandling/convertToImage"
 import { isForm } from "./utils/isForm"
+import { setRedisCache } from "@/services/redis/redis"
+import { TextTranslateParams } from "spitch/resources.js"
+import { FormField } from "@/types/FormField"
+import { connectRedis } from "@/lib/redis"
 export async function initializeSession(prevData: uploadState, formdata: FormData){
     let file = formdata.get("file") as File
-    const lang = formdata.get("lang") as string
+    const lang = formdata.get("lang") as TextTranslateParams["target"]
 
     if(!file || (file instanceof File && file.size === 0)) {
     return { message: "Please upload a file" }
@@ -29,7 +33,7 @@ export async function initializeSession(prevData: uploadState, formdata: FormDat
     const classifyResponse = await classifyForm(file)
     if(!classifyResponse.success) return {message: classifyResponse.error.message}
 
-    let fieldsExtracted;
+    let fieldsExtracted: FormField[] = [];
     if (classifyResponse.data.class === "SIMPLE") {
         fieldsExtracted = await simple_extractor(file);
     } else {
@@ -40,7 +44,14 @@ export async function initializeSession(prevData: uploadState, formdata: FormDat
         return { message: "Extraction failed, No fields extracted" };
     }
     const id = await createSession(file, lang, fieldsExtracted);
-    return { id, message: `Form session created with ID: ${id}` };
+    await connectRedis()
+    await setRedisCache(
+        
+        `formSession:${id}`,
+        JSON.stringify({ id, fields: fieldsExtracted, currentFieldIndex: 0, sessionStarted: false, session_lang: lang }),
+    )
+
+    return { id, message: `Redirecting to form Session...` };
     }catch(error){
     console.error("Unexpected error in initializeSession", error)
     return { message: "Unexpected failure, please try again later" }

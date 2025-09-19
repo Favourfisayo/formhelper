@@ -1,5 +1,5 @@
 import { check_form_prompt } from "@/prompts/check_is_form"
-import { fileToBase64 } from "@/utils/fileToBase64"
+import { fileToBase64 } from "@/utils/fileHandling/fileToBase64"
 import { generateAIContent } from "@/utils/model"
 import { ContentListUnion, Type } from "@google/genai"
 
@@ -24,7 +24,7 @@ export async function isForm(file: File) {
                 
             }
         }
-        const res = await generateAIContent("gemini-2.5-pro", contents, configs) 
+        const res = await generateAIContent("gemini-2.5-flash", contents, configs) 
         if(!res) return
         const isForm = JSON.parse(res.text ?? "") 
         console.log(isForm)
