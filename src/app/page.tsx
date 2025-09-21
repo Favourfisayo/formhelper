@@ -17,7 +17,7 @@ export default function Home() {
             </div>
             <h1 className="heading-hero">
               Form
-              <span className="text-primary">Helper</span>
+              <span className="text-primary">Helper</span> 
             </h1>
           </div>
           <p className="lead">
