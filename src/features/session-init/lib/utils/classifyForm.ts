@@ -3,7 +3,7 @@ export async function classifyForm(file: File) {
     pyform.append("file", file)
 
     try {
-    const res = await fetch("http://localhost:8000/classify", {
+    const res = await fetch("https://formhelper-backend.onrender.com/classify", {
         method: "POST",
         body: pyform
     })

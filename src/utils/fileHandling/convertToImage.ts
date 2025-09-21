@@ -5,7 +5,7 @@ export async function convertToImage(file: File) {
     formData.append("file", file);
 
     try {
-        const res = await fetch("http://localhost:8000/convert-pdf", {
+        const res = await fetch("https://formhelper-backend.onrender.com/convert-pdf", {
             method: "POST",
             body: formData,
         });
