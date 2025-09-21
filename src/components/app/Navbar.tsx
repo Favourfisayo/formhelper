@@ -3,6 +3,7 @@ import {FormHelperLogo} from "./FormHelperLogo"
 import { Button } from "@/components/ui/button"
 import { signIn, signOut, useSession } from "next-auth/react"
 import { Skeleton } from "../ui/skeleton"
+import Image from "next/image"
 export default function Navbar() {
     const {data: session, status} = useSession()
     return (
@@ -31,9 +32,10 @@ export default function Navbar() {
                             >
                                 {session.user?.name}
                             </span>
-                            <div className="w-10 h-10 rounded-full overflow-hidden border border-accent">
+                            <div className="w-10 h-10 relative rounded-full overflow-hidden border border-accent">
                                 {session.user?.image ? (
-                                    <img 
+                                    <Image 
+                                        fill
                                         src={session.user.image}
                                         alt={`${session.user.name}'s profile`}
                                         className="w-full h-full object-cover"

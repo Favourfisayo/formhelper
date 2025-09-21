@@ -51,7 +51,7 @@ export async function initializeSession(prevData: uploadState, formdata: FormDat
 
     return { message: `Redirecting to form Session...`,  id: createdSession.id };
     }catch(error){
-    return { message: "Unexpected failure, please try again later" }
+    return { message: `Unexpected failure, please try again later: ${error}` }
     }
     
 }

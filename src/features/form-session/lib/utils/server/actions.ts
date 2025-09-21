@@ -21,7 +21,7 @@ export async function updateFieldAndSession({
 }: {
     formSessionId: string,
     fieldId: string
-    value: any
+    value:  string | number | boolean | null
     increment: boolean
 
 }) {
@@ -49,24 +49,27 @@ export async function updateFieldAndSession({
 }
 
 export async function moveAction(formData: FormData, move: "back" |"next") {
-    const formSessionId =  formData.get("formSessionId") as string
+  const formSessionId =  formData.get("formSessionId") as string
+  if (!formSessionId || typeof formSessionId !== "string") {
+  return { message: "Invalid formSessionId" };
+  }
+  const formEntries = Array.from(formData.entries());
 
-    const formEntries = Array.from(formData.entries())
+  const entry = formEntries.find(([key]) => key !== "formSessionId");
+  if (!entry) return { message: "No field submitted" };
 
-    const [fieldId, value] = formEntries.find(([key]) => key !== "formSessionId") || []
-
-    if (!fieldId) return { message: "No field submitted" };
+  const [fieldId, value] = entry;
 
     try {
     const updatedFormSession = await updateFieldAndSession({
       formSessionId,
       fieldId,
-      value,
+      value: typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? value : null,
       increment: move === "next" ? true : false
     });
 
     return { message: "OK", session: updatedFormSession as FormSessionDataType };
     }catch(error) {
-    return { message: "Error updating field" };
+    return { message: `Error updating field: ${error instanceof Error ? error.message : error}` };
     }
 }

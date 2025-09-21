@@ -9,7 +9,7 @@ export default async function UploadWelcome() {
                         Welcome
                     </h1>
                     <p className="lead mt-3">
-                        Upload your form to start a filling session. It's quick and secure.
+                        Upload your form to start a filling session. It&apos;s quick and secure.
                     </p>
                 </header>
 

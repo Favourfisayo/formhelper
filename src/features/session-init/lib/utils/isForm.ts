@@ -28,7 +28,7 @@ export async function isForm(file: File) {
         if(!res) return
         const isForm = JSON.parse(res.text ?? "") 
         return {success: true, data: isForm}
-    }catch(error) {
-        return {error: {message: "Error checking is_form"}}
+    }catch(error){
+        return {error: {message: `Error checking is_form: ${error}`}}
         }
 }

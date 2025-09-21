@@ -45,7 +45,7 @@ export async function spitch_speak(text: string, language: SpeechGenerateParams[
     })
 
     return Buffer.from(await (await res.blob()).arrayBuffer());
-}catch(err: any) {
+}catch(err) {
     throw err;
 }
 }

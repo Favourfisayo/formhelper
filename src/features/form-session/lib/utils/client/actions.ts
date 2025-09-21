@@ -33,6 +33,6 @@ export async function prefetchNextAudio(
         sessionId: session.id
     });
   } catch (err) {
-    return null
+    throw new Error(`Error prefetching cached data: ${err}`)
   }
 }

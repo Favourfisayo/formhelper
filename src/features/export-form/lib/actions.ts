@@ -1,9 +1,12 @@
 "use server"
 import { getRedisCache, setRedisCache } from "@/services/redis/redis";
 import { FormSessionDataType } from "@/types/FormSessionData";
-
+export type ExportFormState = {
+  message: string;
+  fileUrl: string | null;
+};
 export async function exportForm(
-  prevState: { message: string | null; fileUrl?: string | null },
+  prevState: ExportFormState,
   formData: FormData
 ) {
   try {
@@ -12,9 +15,9 @@ export async function exportForm(
     const sessionData: FormSessionDataType = JSON.parse(sessionDataRaw.toString())
     const cacheKey = `formSessionExport:${sessionData.id}`
 
-    const exportCache = await getRedisCache(cacheKey)
+    const exportCache = await getRedisCache<ExportFormState>(cacheKey)
     if(exportCache) {
-      return exportCache
+      return exportCache 
     }
   
     const response = await fetch("http://localhost:8000/export-form", {
@@ -34,10 +37,10 @@ export async function exportForm(
     const arrayBuffer = await blob.arrayBuffer()
     const base64 = Buffer.from(arrayBuffer).toString("base64")
 
-    const obj = {
-      message: "Form exported successfully!", 
-      fileUrl: `data:application/pdf;base64,${base64}`
-    }
+    const obj: ExportFormState = {
+      message: "Form exported successfully!",
+      fileUrl: `data:application/pdf;base64,${base64}`,
+    };
     await setRedisCache(cacheKey, obj)
     return obj
   } catch (err) {
