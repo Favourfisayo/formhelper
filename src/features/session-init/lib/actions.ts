@@ -8,7 +8,6 @@ import { isForm } from "./utils/isForm"
 import { setRedisCache } from "@/services/redis/redis"
 import { TextTranslateParams } from "spitch/resources.js"
 import { FormField } from "@/types/FormField"
-import { connectRedis } from "@/lib/redis"
 export async function initializeSession(prevData: uploadState, formdata: FormData){
     let file = formdata.get("file") as File
     const lang = formdata.get("lang") as TextTranslateParams["target"]
@@ -19,7 +18,6 @@ export async function initializeSession(prevData: uploadState, formdata: FormDat
 
     try {
     if(file.type === "application/pdf"){
-        console.log("PDF file detected, converting...")
         const convertedFile = await convertToImage(file)
         if(!convertedFile) return {message: "Failed to convert PDF"};
 
@@ -34,26 +32,25 @@ export async function initializeSession(prevData: uploadState, formdata: FormDat
     if(!classifyResponse.success) return {message: classifyResponse.error.message}
 
     let fieldsExtracted: FormField[] = [];
-    if (classifyResponse.data.class === "SIMPLE") {
+    //TO-DO: Separate custom-extractor to use better reasoning models and prompt.
+    if (classifyResponse.data.class === "SIMPLE" || classifyResponse.data.class === "CUSTOM") {
         fieldsExtracted = await simple_extractor(file);
-    } else {
-        console.log("Custom form, use custom extractor..");
     }
 
     if (!fieldsExtracted || fieldsExtracted.length === 0) {
         return { message: "Extraction failed, No fields extracted" };
     }
-    const id = await createSession(file, lang, fieldsExtracted);
-    await connectRedis()
+    const createdSession = await createSession(file, lang, fieldsExtracted);
+    if(!createdSession) {
+        return {message: "Failed to create session"}
+    }
     await setRedisCache(
-        
-        `formSession:${id}`,
-        JSON.stringify({ id, fields: fieldsExtracted, currentFieldIndex: 0, sessionStarted: false, session_lang: lang }),
+        `formSession:${createdSession?.id}`,
+        createdSession,
     )
 
-    return { id, message: `Redirecting to form Session...` };
+    return { message: `Redirecting to form Session...`,  id: createdSession.id };
     }catch(error){
-    console.error("Unexpected error in initializeSession", error)
     return { message: "Unexpected failure, please try again later" }
     }
     

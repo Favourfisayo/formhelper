@@ -5,6 +5,8 @@ import { Globe } from "lucide-react"
 const languages = [
     { code: "en", name: "English" },
     { code: "yo", name: "Yoruba" },
+    { code: "ha", name: "Hausa" },
+    { code: "ig", name: "Igbo" },
 ]
 
 export default function SelectLanguage() {

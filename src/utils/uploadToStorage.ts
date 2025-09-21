@@ -8,7 +8,7 @@ export async function uploadToStorage(file: File) {
       upsert: false,
     });
 
-  if (error) throw error;
+  if (error) throw new Error(`Error uploading form: ${error}`);
 
   const { data: { publicUrl } } = supabase.storage
     .from("uploadedforms")

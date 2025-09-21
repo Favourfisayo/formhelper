@@ -1,6 +1,6 @@
 import UploadForm from "@/features/session-init/components/UploadForm";
 
-export default function UploadWelcome() {
+export default async function UploadWelcome() {
     return (
         <main role="main" aria-labelledby="welcome-heading">
             <section className="mx-auto max-w-2xl py-16 sm:py-20 md:py-24">

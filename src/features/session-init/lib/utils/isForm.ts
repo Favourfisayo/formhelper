@@ -27,10 +27,8 @@ export async function isForm(file: File) {
         const res = await generateAIContent("gemini-2.5-flash", contents, configs) 
         if(!res) return
         const isForm = JSON.parse(res.text ?? "") 
-        console.log(isForm)
         return {success: true, data: isForm}
     }catch(error) {
-        console.log("Error checking is_form: ", error)
         return {error: {message: "Error checking is_form"}}
         }
 }

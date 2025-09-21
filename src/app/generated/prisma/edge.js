@@ -139,7 +139,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\HP\\Desktop\\Spitch Hackathon Project\\frontend\\prisma\\app\\generated\\prisma",
+      "value": "C:\\Users\\HP\\Desktop\\Spitch Hackathon Project\\frontend\\src\\app\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -160,7 +160,7 @@ const config = {
     "rootEnvPath": "../../../../.env",
     "schemaEnvPath": "../../../../.env"
   },
-  "relativePath": "../../..",
+  "relativePath": "../../../../prisma",
   "clientVersion": "6.16.1",
   "engineVersion": "1c57fdcd7e44b29b9313256c76699e91c3ac3c43",
   "datasourceNames": [
@@ -175,8 +175,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"./app/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel FormSession {\n  id                String   @id @default(uuid())\n  fields            Json\n  currentFieldIndex Int      @default(0)\n  session_lang      String\n  sessionStarted    Boolean  @default(false)\n  createdAt         DateTime @default(now())\n  fileName          String\n  fileType          String\n  fileUrl           String\n}\n",
-  "inlineSchemaHash": "7f467a3170c9913b51db9b51ec345b4adda12689ca8970339dfd886e0935cafe",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/app/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel FormSession {\n  id                String   @id @default(uuid())\n  fields            Json\n  currentFieldIndex Int      @default(0)\n  session_lang      String\n  sessionStarted    Boolean  @default(false)\n  createdAt         DateTime @default(now())\n  fileName          String\n  fileType          String\n  fileUrl           String\n}\n",
+  "inlineSchemaHash": "c63fdee06a44a6f456f8eba00dd064967444e54e1ce77c79ad74746bafd081e8",
   "copyEngine": false
 }
 config.dirname = '/'

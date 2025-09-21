@@ -1,4 +1,3 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -6,57 +5,35 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import FormSession from "./FormSession"
+import UserFormSessions from "./UserFormSessions"
+import { Suspense } from "react"
+import { FormSessionSkeleton } from "@/components/ui/form-session-skeleton"
 
-// Menu items.
-const items = [
-  {
-    title: "Home",
-    url: "#",
-    icon: Home,
-  },
-  {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
-  },
-  {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-]
+function FormSessionsLoading() {
+  return (
+    <div className="space-y-1">
+      {[...Array(5)].map((_, i) => (
+        <SidebarMenuItem key={i}>
+          <FormSessionSkeleton />
+        </SidebarMenuItem>
+      ))}
+    </div>
+  )
+}
 
-export function AppSidebar() {
+export async function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent className="mt-20">
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Your Forms</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <FormSession id={item.title} fileName={item.title} />
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <Suspense fallback={<FormSessionsLoading />}>
+                <UserFormSessions />
+              </Suspense>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

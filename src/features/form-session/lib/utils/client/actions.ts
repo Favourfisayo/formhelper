@@ -32,9 +32,7 @@ export async function prefetchNextAudio(
         language: session.session_lang,
         sessionId: session.id
     });
-
-    console.log("✅ Prefetched audio for next field:", nextField.label);
   } catch (err) {
-    console.error("⚠️ Prefetch failed for next field:", nextField.label, err);
+    return null
   }
 }

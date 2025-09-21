@@ -1,8 +1,7 @@
-import prisma from "@/lib/db"
+import prisma from "@/lib/prisma"
 import { setRedisCache } from "@/services/redis/redis"
 import { FormSessionDataType } from "@/types/FormSessionData"
 import { getFormSessionData } from "../../actions"
-import { connectRedis } from "@/lib/redis"
 
 export async function startSession(formSessionId: string): Promise<FormSessionDataType> {
   const updated = await prisma.formSession.update({
@@ -10,8 +9,7 @@ export async function startSession(formSessionId: string): Promise<FormSessionDa
     data: { sessionStarted: true },
   })
 
-  await connectRedis()
-  await setRedisCache(`formSession:${formSessionId}`, JSON.stringify(updated))
+  await setRedisCache(`formSession:${formSessionId}`, updated)
   return updated as FormSessionDataType
 }
 
@@ -19,10 +17,12 @@ export async function updateFieldAndSession({
     formSessionId,
     fieldId,
     value,
+    increment
 }: {
     formSessionId: string,
     fieldId: string
     value: any
+    increment: boolean
 
 }) {
     const formSessionData = await getFormSessionData(formSessionId)
@@ -36,30 +36,37 @@ export async function updateFieldAndSession({
         where: {id: formSessionId},
         data: {
             fields: updatedFields,
-            currentFieldIndex: {increment: 1}
+            currentFieldIndex: increment ? {increment: 1} : {decrement: 1}
         },
     })
-    await connectRedis()
     await setRedisCache(
     `formSession:${formSessionId}`,
-    JSON.stringify(updatedFormSessionData),
+     updatedFormSessionData,
     );
 
 
     return updatedFormSessionData
 }
 
-export async function goBackField(formSessionId: string) {
-  await connectRedis();
-  const session = await prisma.formSession.findUnique({ where: { id: formSessionId } });
-  if (!session) throw new Error("Form session not found");
+export async function moveAction(formData: FormData, move: "back" |"next") {
+    const formSessionId =  formData.get("formSessionId") as string
 
-  const updatedSession = await prisma.formSession.update({
-    where: { id: formSessionId },
-    data: {currentFieldIndex: {decrement: 1}},
-  });
-  const cacheKey = `formSession:${formSessionId}`;
-  await setRedisCache(cacheKey, JSON.stringify(updatedSession));
+    const formEntries = Array.from(formData.entries())
 
-  return updatedSession;
+    const [fieldId, value] = formEntries.find(([key]) => key !== "formSessionId") || []
+
+    if (!fieldId) return { message: "No field submitted" };
+
+    try {
+    const updatedFormSession = await updateFieldAndSession({
+      formSessionId,
+      fieldId,
+      value,
+      increment: move === "next" ? true : false
+    });
+
+    return { message: "OK", session: updatedFormSession as FormSessionDataType };
+    }catch(error) {
+    return { message: "Error updating field" };
+    }
 }

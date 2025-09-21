@@ -21,7 +21,7 @@ export default function UploadForm() {
     useEffect(() => {
         if(state.id) {
             startTransition(() => {
-                router.replace(`/form-session/${state.id}`);
+                router.replace(`/app/form-session/${state.id}`);
             });
         }
     }, [state.id, router])
@@ -31,8 +31,8 @@ export default function UploadForm() {
     }
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-    setSelectedFile(e.target.files[0])
-        }
+        setSelectedFile(e.target.files[0])
+    }
     }
 
     return (

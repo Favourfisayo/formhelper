@@ -19,7 +19,7 @@ export function useFormAudio() {
           audioRef.current.src = url;
           audioRef.current.load();
           await audioRef.current.play().catch((err) => {
-            console.error("Audio playback failed:", err);
+            throw new Error(`Audio playback failed: ${err}`)
           });
         }
         if (session) {

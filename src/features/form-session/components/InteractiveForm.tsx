@@ -7,6 +7,7 @@ import { FormSessionDataType } from "@/types/FormSessionData"
 import { SessionState } from "@/types/SessionState"
 import { Button } from "@/components/ui/button"
 import Loading from "@/components/app/Loading"
+import ExportForm from "@/features/export-form/components/ExportForm"
 
 type ActionType =  "next" | "back" | "start"
 export default function InteractiveForm({ formSessionData }: { formSessionData: FormSessionDataType }) {
@@ -20,21 +21,18 @@ export default function InteractiveForm({ formSessionData }: { formSessionData: 
         return await handleNextField(prevState, formData);
       case "back":
         return await handleGoBackAction(prevState, formData);
-      case "start":
-        return await handleStartSession(prevState, formData);
+      case "start": {
+        const result =  await handleStartSession(prevState, formData);
+        return {...result, resumed: true}
+      }
       default:
         return prevState;
     }
   },
   { message: "", session: formSessionData }
 );
-  const [resumed, setResumed] = useState(false)
+  const [resumed, setResumed] = useState(formSessionData.sessionStarted ? false : true)
   const { audioRef, loadingAudio, playQuestionAudio, stopAudio } = useFormAudio();
-  useEffect(() => {
-    if(state.session?.sessionStarted) {
-      setResumed(state.session?.sessionStarted)
-    }
-  }, [state.session?.sessionStarted])
   useEffect(() => {
     if (!state.session?.sessionStarted || !resumed) return;
     const currentIndex = state.session.currentFieldIndex;
@@ -78,18 +76,14 @@ export default function InteractiveForm({ formSessionData }: { formSessionData: 
           size="lg"
           className="min-w-[200px]"
         >
+          Resume Session
         </Button>
       </div>
     );
   }
   if (formCompleted) {
     return (
-      <div className="text-center p-6">
-        <h2 className="text-xl font-semibold mb-4">Form Completed!</h2>
-        <Button>
-          Export
-        </Button>
-      </div>
+      <ExportForm sessionData = {state.session}/>
     );
   }
 
@@ -111,11 +105,17 @@ export default function InteractiveForm({ formSessionData }: { formSessionData: 
         <Loading text="Preparing question audio"/>
       ) : (
         <div className="space-y-8">
-          <form action={formAction} className="space-y-6">
+          <form 
+          onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+          }}} 
+          action={formAction} className="space-y-6">
           <input type="hidden" name="formSessionId" value={state.session.id} />
 
           <div className="bg-white/5 flex justify-center rounded-lg p-6">
             <FormElement
+              key={currentField.id}
               fieldType={currentField.type}
               options={currentField.options}
               value={currentField.value}
@@ -123,7 +123,7 @@ export default function InteractiveForm({ formSessionData }: { formSessionData: 
             />
           </div>
             {isPending && (
-            <Loading text="Updating field in DB..."/>
+            <Loading text="Updating form..."/>
           )}
           <div className="flex items-center justify-between gap-4 pt-4">
             <Button
@@ -131,7 +131,7 @@ export default function InteractiveForm({ formSessionData }: { formSessionData: 
               name="actionType"
               value="back"
               variant="outline"
-              disabled={isPending}
+              disabled={isPending || state.session.currentFieldIndex === 0}
             >
               Back
             </Button>

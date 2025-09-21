@@ -36,7 +36,7 @@ const config = {
 
 
 }
-const response = await generateAIContent("gemini-2.5-pro", contents, config)
+const response = await generateAIContent("gemini-2.5-flash", contents, config)
 
 const extractedFields:FormField[] = JSON.parse(response.text ?? "[]")
 return extractedFields

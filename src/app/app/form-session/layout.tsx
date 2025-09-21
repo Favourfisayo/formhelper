@@ -1,4 +1,3 @@
-import { AppSidebar } from "@/components/app/AppSidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 export default function FormSessionLayout({children}: {
@@ -6,10 +5,10 @@ export default function FormSessionLayout({children}: {
 }) {
     return (
     <SidebarProvider>
-      <AppSidebar />
+      {/* <AppSidebar /> --- After prisma adapter fix, add user's form session in sidebar*/}
       <main className="min-h-screen w-full relative">
         <div className="flex w-full absolute top-20">
-        <SidebarTrigger />
+        {/* <SidebarTrigger /> */}
         {children}
         </div>
       </main>

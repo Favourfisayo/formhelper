@@ -6,7 +6,7 @@ Your task: Read the provided form text and return a JSON array of all the fields
 Each field must follow this format:
 [
   {
-    "id": "machine_friendly_id",
+    "id": "a unique machine friendly id",
     "label": "Field label exactly as shown",
     "type": "text | email | number | date | checkbox | radio | select | textarea",
     "options": ["option1", "option2"], // empty array if not applicable
